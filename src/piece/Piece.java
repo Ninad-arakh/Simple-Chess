@@ -1,5 +1,6 @@
 package piece;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -46,6 +47,10 @@ public class Piece {
 	
 	public int GetY(int row) {
 		return row * Board.SQUARE_SIZE;
+	}
+	
+	public void draw(Graphics2D g2) {
+		g2.drawImage(image, x, y, Board.SQUARE_SIZE, Board.SQUARE_SIZE,  null);
 	}
 	
 	
