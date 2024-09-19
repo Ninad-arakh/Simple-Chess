@@ -94,6 +94,13 @@ public class Piece {
 		return false;
 	}
 	
+	public boolean isSameSquare(int targetCol, int targetRow) {
+		if(targetCol == preCol && targetRow == preRow) {
+			return true;
+		}
+		return false;
+	}
+	
 	public Piece getHitting(int targetCol, int targetRow) {
 		for(Piece piec: GamePanel.simPieces) {
 			if(piec.col == targetCol && piec.row == targetRow && piec != this) {
@@ -120,6 +127,102 @@ public class Piece {
 		return false;
 	}
 	
+	public boolean pieceIsOnStraightLine(int targetCol, int targetRow) {
+		// piece is moving to left
+		for (int c = preCol - 1; c > targetCol; c--) {
+			for (Piece piec : GamePanel.simPieces) {
+				if (piec.col == c && piec.row == targetRow) {
+					hittingP = piec;
+					return true;
+				}
+			}
+
+		}
+		// piece is moving to right
+		for (int c = preCol + 1; c < targetCol; c++) {
+			for (Piece piec : GamePanel.simPieces) {
+				if (piec.col == c && piec.row == targetRow) {
+					hittingP = piec;
+					return true;
+				}
+			}
+
+		}
+
+		// piece is moving to up
+		for (int r = preRow - 1; r > targetRow; r--) {
+			for (Piece piec : GamePanel.simPieces) {
+				if (piec.col == targetCol && piec.row == r) {
+					hittingP = piec;
+					return true;
+				}
+			}
+
+		}
+
+		// piece is moving to down
+		for (int r = preRow + 1; r < targetRow; r++) {
+			for (Piece piec : GamePanel.simPieces) {
+				if (piec.col == targetCol && piec.row == r) {
+					hittingP = piec;
+					return true;
+				}
+			}
+
+		}
+
+		return false;
+	}
+	
+	public boolean pieceIsOnDiagonalLine(int targetCol , int targetRow) {
+		if(targetRow < preRow) {
+			
+			//up left
+			for(int c = preCol - 1; c > targetCol; c--) {
+				int diff = Math.abs(c - preCol);
+				for(Piece piec: GamePanel.simPieces) {
+					if(piec.col == c && piec.row == preRow - diff) {
+						return true;
+					}
+				}
+			}
+			
+			//up right
+			for(int c = preCol + 1; c < targetCol; c++) {
+				int diff = Math.abs(c - preCol);
+				for(Piece piec: GamePanel.simPieces) {
+					if(piec.col == c && piec.row == preRow - diff) {
+						return true;
+					}
+				}
+			}
+			
+		}
+		if(targetRow > preRow) {
+			
+			//down left
+			for(int r = preCol - 1; r > targetCol; r--) {
+				int diff = Math.abs(r - preCol);
+				for(Piece piec: GamePanel.simPieces) {
+					if(piec.col == r && piec.row == preRow + diff) {
+						return true;
+					}
+				}
+			}
+			
+			//down right
+			for(int r = preCol + 1; r < targetCol; r++) {
+				int diff = Math.abs(r - preCol);
+				for(Piece piec: GamePanel.simPieces) {
+					if(piec.col == r && piec.row == preRow + diff) {
+						return true;
+					}
+				}
+			}
+			
+		}
+		return false;
+	}
 	public void draw(Graphics2D g2) {
 		g2.drawImage(image, x, y, Board.SQUARE_SIZE, Board.SQUARE_SIZE,  null);
 	}
