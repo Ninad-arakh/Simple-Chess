@@ -25,6 +25,9 @@ public class GamePanel extends JPanel implements Runnable {
 	Thread gameThread;
 	Board board = new Board();
 	Mouse mouse = new Mouse();
+	
+	boolean canMove;
+	boolean validSquare;
 
 	// pieces
 	public static ArrayList<Piece> pieces = new ArrayList<Piece>();
@@ -69,7 +72,7 @@ public class GamePanel extends JPanel implements Runnable {
 		pieces.add(new Knight(6, 7, WHITE));
 		pieces.add(new Bishop(2, 7, WHITE));
 		pieces.add(new Bishop(5, 7, WHITE));
-		pieces.add(new King(4, 7, WHITE));
+		pieces.add(new King(4, 4, WHITE));
 		pieces.add(new Queen(3, 7, WHITE));
 
 		// BlackTeam
@@ -127,6 +130,8 @@ public class GamePanel extends JPanel implements Runnable {
 		if (mouse.pressed) {
 
 			if (activeP == null) {
+				
+				
 				// if the activeP is null check if you can pick up a piece
 				for (Piece piec : simPieces) {
 					// if the mouse is on Ally piece, pick it up as the activeP
@@ -146,20 +151,50 @@ public class GamePanel extends JPanel implements Runnable {
 		// Mouse Button released //
 		if (mouse.pressed == false) {
 			if (activeP != null) {
-				activeP.updatePosition();
-				activeP = null;
+				if (validSquare) {
+					
+					//move confirmed
+					
+					//update piece list in case a piece has been captured or removed
+					copyPieces(simPieces, pieces);
+					activeP.updatePosition();
+				} else {
+					
+					//the move is not valid reset 
+					copyPieces(pieces, simPieces);
+					activeP.resetPosition();
+					activeP = null;
+				}
+
 			}
 		}
 
 	}
 
 	public void simulate() {
+		
+		validSquare = false;
+		canMove = false;
+		
+		//reset the pieces list in every loop
+		//this is vasically for restoring the removed piece
+		copyPieces(pieces, simPieces);
 
 		// if a piece is being held, update it's position
 		activeP.x = mouse.x - board.HALF_SQUARE_SIZE;
 		activeP.y = mouse.y - board.HALF_SQUARE_SIZE;
 		activeP.col = activeP.getCol(activeP.x);
 		activeP.row = activeP.getRow(activeP.y);
+		
+		if(activeP.canMove(activeP.col, activeP.row)) {
+			canMove = true;
+
+			if(activeP.hittingP != null) {
+				simPieces.remove(activeP.hittingP.getIndex());
+			}
+			validSquare = true;
+			
+		}
 	}
 
 	public void paintComponent(Graphics g) {
