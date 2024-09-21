@@ -14,5 +14,40 @@ public class Pawn extends Piece {
 			image = getImage("/piece/black-pawn");
 		}
 	}
+	
+	public boolean canMove(int targetCol, int targetRow) {
+		
+		if(isWithinBoard(targetCol, targetRow) && isSameSquare(targetCol, targetRow) == false) {
+			//define move on base of color
+			int moveValue;
+			if(color == GamePanel.WHITE) {
+				moveValue = -1;
+			}
+			else {
+				moveValue = 1;
+			}
+			
+			//check the hitting piece
+			hittingP = getHitting(targetCol, targetRow);
+			
+			//one square movement
+			if(targetCol == preCol && targetRow == preRow + moveValue && hittingP == null) {
+				return true;
+			}
+			
+			//two square movement
+			if (targetCol == preCol && targetRow == preRow + moveValue * 2 && hittingP == null && hasMoved == false
+					&& pieceIsOnStraightLine(targetCol, targetRow) == false) {
+				return true;
+			}
+			
+			//diagonal movement to capture the pieces
+			if(Math.abs(targetCol - preCol) == 1 && targetRow == preRow + moveValue && hittingP != null && hittingP.color != color) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
 
 }

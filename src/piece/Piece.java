@@ -16,6 +16,7 @@ public class Piece {
 	public int col , row , preCol, preRow;
 	public int color;
 	public Piece hittingP;
+	public boolean hasMoved;
 	
 	
 	public Piece(int col, int row, int color) {
@@ -75,6 +76,7 @@ public class Piece {
 		y = GetY(row);
 		preCol = getCol(x);
 		preRow = getRow(y);
+		hasMoved = true;
 	}
 	
 	public void resetPosition() {

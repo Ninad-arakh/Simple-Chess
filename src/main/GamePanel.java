@@ -3,8 +3,10 @@ package main;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
@@ -20,7 +22,7 @@ import piece.Rook;
 public class GamePanel extends JPanel implements Runnable {
 
 	public static final int Width = 1100;
-	public static final int Height = 800;
+	public static final int Height = 720;
 	final int FPS = 60;
 	Thread gameThread;
 	Board board = new Board();
@@ -67,13 +69,13 @@ public class GamePanel extends JPanel implements Runnable {
 		pieces.add(new Pawn(6, 6, WHITE));
 		pieces.add(new Pawn(7, 6, WHITE));
 		pieces.add(new Rook(0, 7, WHITE));
-		pieces.add(new Rook(4, 7, WHITE));
+		pieces.add(new Rook(7, 7, WHITE));
 		pieces.add(new Knight(1, 7, WHITE));
 		pieces.add(new Knight(6, 7, WHITE));
 		pieces.add(new Bishop(2, 7, WHITE));
 		pieces.add(new Bishop(5, 7, WHITE));
 		pieces.add(new King(4, 7, WHITE));
-		pieces.add(new Queen(4, 4, WHITE));
+		pieces.add(new Queen(3, 7, WHITE));
 
 		// BlackTeam
 		pieces.add(new Pawn(0, 1, BLACK));
@@ -158,6 +160,7 @@ public class GamePanel extends JPanel implements Runnable {
 					//update piece list in case a piece has been captured or removed
 					copyPieces(simPieces, pieces);
 					activeP.updatePosition();
+					changePlayer();
 				} else {
 					
 					//the move is not valid reset 
@@ -196,6 +199,16 @@ public class GamePanel extends JPanel implements Runnable {
 			
 		}
 	}
+	
+	public void changePlayer() {
+		if(currentColor == WHITE) {
+			currentColor = BLACK;
+		}
+		else {
+			currentColor = WHITE;
+		}
+		activeP = null ;
+	}
 
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -210,14 +223,31 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 
 		if (activeP != null) {
-			g2.setColor(Color.white);
-			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-			g2.fillRect(activeP.col * Board.SQUARE_SIZE, activeP.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE,
-					Board.SQUARE_SIZE);
-			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-
+			if (canMove) {
+				g2.setColor(Color.white);
+				g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+				g2.fillRect(activeP.col * Board.SQUARE_SIZE, activeP.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE,
+						Board.SQUARE_SIZE);
+				g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+			}
 			activeP.draw(g2);
 		}
+		
+		//status message
+		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g2.setFont(new Font("Book Antiqua", Font.PLAIN, 40));
+		g2.setColor(Color.white);
+		
+		if(currentColor == WHITE) {
+			g2.drawString("White's Turn", 780, 550);
+		}else {
+			g2.drawString("Black's Turn", 780, 250);
+		}
+		
+		
+		
+		
+		
 	}
 
 }
