@@ -35,6 +35,7 @@ public class GamePanel extends JPanel implements Runnable {
 	public static ArrayList<Piece> pieces = new ArrayList<Piece>();
 	public static ArrayList<Piece> simPieces = new ArrayList<Piece>();
 	Piece activeP;
+	public static Piece castlingP;
 
 	// color
 	public static final int WHITE = 0;
@@ -70,12 +71,12 @@ public class GamePanel extends JPanel implements Runnable {
 		pieces.add(new Pawn(7, 6, WHITE));
 		pieces.add(new Rook(0, 7, WHITE));
 		pieces.add(new Rook(7, 7, WHITE));
-		pieces.add(new Knight(1, 7, WHITE));
-		pieces.add(new Knight(6, 7, WHITE));
-		pieces.add(new Bishop(2, 7, WHITE));
-		pieces.add(new Bishop(5, 7, WHITE));
+//		pieces.add(new Knight(1, 7, WHITE));
+//		pieces.add(new Knight(6, 7, WHITE));
+//		pieces.add(new Bishop(2, 7, WHITE));
+//		pieces.add(new Bishop(5, 7, WHITE));
 		pieces.add(new King(4, 7, WHITE));
-		pieces.add(new Queen(3, 7, WHITE));
+//		pieces.add(new Queen(3, 7, WHITE));
 
 		// BlackTeam
 		pieces.add(new Pawn(0, 1, BLACK));
@@ -160,6 +161,9 @@ public class GamePanel extends JPanel implements Runnable {
 					//update piece list in case a piece has been captured or removed
 					copyPieces(simPieces, pieces);
 					activeP.updatePosition();
+					if(castlingP != null) {
+						castlingP.updatePosition();
+					}
 					changePlayer();
 				} else {
 					
@@ -182,6 +186,12 @@ public class GamePanel extends JPanel implements Runnable {
 		//reset the pieces list in every loop
 		//this is vasically for restoring the removed piece
 		copyPieces(pieces, simPieces);
+		
+		if(castlingP != null) {
+			castlingP.col = castlingP.preCol ;
+			castlingP.x = castlingP.GetX(castlingP.col);
+			castlingP = null;
+		}
 
 		// if a piece is being held, update it's position
 		activeP.x = mouse.x - board.HALF_SQUARE_SIZE;
@@ -196,7 +206,20 @@ public class GamePanel extends JPanel implements Runnable {
 				simPieces.remove(activeP.hittingP.getIndex());
 			}
 			validSquare = true;
+			checkCastling();
 			
+		}
+	}
+	
+	private void checkCastling() {
+		if(castlingP != null) {
+			if(castlingP.col == 0) {
+				castlingP.col += 3;
+			}
+			else if(castlingP.col ==7) {
+				castlingP.col -= 2;
+			}
+			castlingP.x = castlingP.GetX(castlingP.col);
 		}
 	}
 	
