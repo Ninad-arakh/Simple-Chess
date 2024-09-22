@@ -8,15 +8,17 @@ import javax.imageio.ImageIO;
 
 import main.Board;
 import main.GamePanel;
+import main.Type;
 
 public class Piece {
 	
+	public Type type;
 	public BufferedImage image;
 	public int x , y;
 	public int col , row , preCol, preRow;
 	public int color;
 	public Piece hittingP;
-	public boolean hasMoved;
+	public boolean hasMoved, twoStepped;
 	
 	
 	public Piece(int col, int row, int color) {
