@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
@@ -27,6 +28,8 @@ public class GamePanel extends JPanel implements Runnable {
 	Thread gameThread;
 	Board board = new Board();
 	Mouse mouse = new Mouse();
+	Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    private static final Color ILLEGAL_COLOR = new Color(255,82,82);
 
 	boolean canMove;
 	boolean validSquare;
@@ -51,7 +54,8 @@ public class GamePanel extends JPanel implements Runnable {
 		addMouseMotionListener(mouse);
 		addMouseListener(mouse);
 
-		setPieces();
+//		setPieces();
+		testIllegal();
 		copyPieces(pieces, simPieces);
 	}
 
@@ -97,6 +101,14 @@ public class GamePanel extends JPanel implements Runnable {
 		pieces.add(new Bishop(5, 0, BLACK));
 		pieces.add(new King(4, 0, BLACK));
 		pieces.add(new Queen(3, 0, BLACK));
+	}
+	
+	public void testIllegal() {
+		pieces.add(new Pawn(7,6, WHITE));
+		pieces.add(new King(3,7, WHITE));
+		pieces.add(new King(0,3, BLACK));
+		pieces.add(new Bishop(1,4, BLACK));
+		pieces.add(new Queen(4,5, BLACK));
 	}
 
 	private void copyPieces(ArrayList<Piece> source, ArrayList<Piece> target) {
@@ -214,11 +226,30 @@ public class GamePanel extends JPanel implements Runnable {
 			if (activeP.hittingP != null) {
 				simPieces.remove(activeP.hittingP.getIndex());
 			}
-			validSquare = true;
 			checkCastling();
+			
+			if (!isIllegal(activeP)) {
+			    validSquare = true;
+			}
+			
 
 		}
 	}
+	
+	private boolean isIllegal(Piece king) {
+		if (king.type != Type.KING) {
+			System.out.println(activeP.type);
+			return false;
+		}
+		for (Piece piec : simPieces) {
+			if (piec != king && piec.color != king.color && piec.canMove(king.col, king.row)) {
+				return true; // There is a threat to the king
+			}
+		}
+
+		return false; // The king is safe
+	}
+
 
 	private void checkCastling() {
 		if (castlingP != null) {
@@ -308,16 +339,18 @@ public class GamePanel extends JPanel implements Runnable {
 			p.draw(g2);
 		}
 
-		if (activeP != null) {
-			if (canMove) {
-				g2.setColor(Color.white);
-				g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-				g2.fillRect(activeP.col * Board.SQUARE_SIZE, activeP.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE,
-						Board.SQUARE_SIZE);
-				g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-			}
-			activeP.draw(g2);
+		if (activeP != null && canMove) {
+		    Color fillColor = isIllegal(activeP) ? ILLEGAL_COLOR : Color.WHITE;
+
+		    g2.setColor(fillColor);
+		    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+		    g2.fillRect(activeP.col * Board.SQUARE_SIZE, activeP.row * Board.SQUARE_SIZE,
+		                Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+		    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+		    activeP.draw(g2);
 		}
+
 
 		// status message
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -325,6 +358,7 @@ public class GamePanel extends JPanel implements Runnable {
 		g2.setColor(Color.white);
 
 		if (promotion) {
+			//NINAD_ARAKH
 			g2.drawString("Promote to :", 780, 150);
 			for (Piece piec : promoPieces) {
 				if(currentColor == WHITE) {

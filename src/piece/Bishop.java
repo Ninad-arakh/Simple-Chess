@@ -8,7 +8,7 @@ public class Bishop extends Piece {
 	public Bishop(int col, int row, int color) {
 		super(col, row, color);
 		
-		type = Type.KING;
+		type = Type.BISHOP;
 		
 		if(color == GamePanel.WHITE) {
 			image = getImage("/piece/white-bishop");

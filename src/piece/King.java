@@ -7,6 +7,8 @@ public class King extends Piece{
 	public King(int col, int row, int color) {
 		super(col, row, color);
 		
+		type = type.KING;
+		
 		if(color == GamePanel.WHITE) {
 			image = getImage("/piece/white-King");
 		}
