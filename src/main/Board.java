@@ -10,8 +10,8 @@ public class Board {
 	public static final int SQUARE_SIZE =90;
 	public static final int HALF_SQUARE_SIZE = SQUARE_SIZE / 2;
 	
-	private static final Color LIGHT_COLOR = new Color(210, 165, 125);
-    private static final Color DARK_COLOR = new Color(175, 115, 70);
+	private static final Color LIGHT_COLOR = new Color(208, 223, 244);
+    private static final Color DARK_COLOR = new Color(75, 100, 138);
 	
 	
 	public void draw(Graphics2D g2) {

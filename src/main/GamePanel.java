@@ -29,11 +29,12 @@ public class GamePanel extends JPanel implements Runnable {
 	Board board = new Board();
 	Mouse mouse = new Mouse();
 	Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    private static final Color ILLEGAL_COLOR = new Color(255,82,82);
-    private static final Color WIN_COLOR = new Color(255,43,255);
+	private static final Color ILLEGAL_COLOR = new Color(255, 82, 82);
+	private static final Color WIN_COLOR = new Color(255, 43, 255);
 
 	boolean canMove;
 	boolean validSquare;
+	boolean stalemate;
 
 	// pieces
 	public static ArrayList<Piece> pieces = new ArrayList<Piece>();
@@ -56,8 +57,9 @@ public class GamePanel extends JPanel implements Runnable {
 		addMouseMotionListener(mouse);
 		addMouseListener(mouse);
 
-//		setPieces();
-		testIllegal();
+		setPieces();
+//		testIllegal();
+//		testStalemate();
 		copyPieces(pieces, simPieces);
 	}
 
@@ -104,13 +106,19 @@ public class GamePanel extends JPanel implements Runnable {
 		pieces.add(new King(4, 0, BLACK));
 		pieces.add(new Queen(3, 0, BLACK));
 	}
-	
+
 	public void testIllegal() {
-		pieces.add(new Pawn(7,6, WHITE));
-		pieces.add(new King(3,7, WHITE));
-		pieces.add(new King(0,3, BLACK));
-		pieces.add(new Bishop(1,4, BLACK));
-		pieces.add(new Queen(4,5, BLACK));
+		pieces.add(new Pawn(7, 6, WHITE));
+		pieces.add(new King(3, 7, WHITE));
+		pieces.add(new King(0, 3, BLACK));
+		pieces.add(new Bishop(1, 4, BLACK));
+		pieces.add(new Queen(4, 5, BLACK));
+	}
+
+	public void testStalemate() {
+		pieces.add(new King(0, 3, BLACK));
+		pieces.add(new King(2, 4, WHITE));
+		pieces.add(new Queen(2, 1, WHITE));
 	}
 
 	private void copyPieces(ArrayList<Piece> source, ArrayList<Piece> target) {
@@ -147,7 +155,7 @@ public class GamePanel extends JPanel implements Runnable {
 
 		if (promotion) {
 			promoting();
-		} else if(!gameOver) {
+		} else if (!gameOver && !stalemate) {
 			//////// Mouse Button Pressed////////////
 			if (mouse.pressed) {
 
@@ -182,16 +190,17 @@ public class GamePanel extends JPanel implements Runnable {
 						if (castlingP != null) {
 							castlingP.updatePosition();
 						}
-						if(isKingInCheck() && isCheckMate()) {
+						if (isKingInCheck() && isCheckMate()) {
 							gameOver = true;
-						}
-						else {
+						} else if (isStalemate() && !isKingInCheck()) {
+							stalemate = true;
+						} else {
 							if (canPromot()) {
 								promotion = true;
 							} else {
 								changePlayer();
 							}
-						}						
+						}
 					} else {
 
 						// the move is not valid reset
@@ -234,15 +243,14 @@ public class GamePanel extends JPanel implements Runnable {
 				simPieces.remove(activeP.hittingP.getIndex());
 			}
 			checkCastling();
-			
+
 			if (!isIllegal(activeP) && !opponentCanCapKing()) {
-			    validSquare = true;
+				validSquare = true;
 			}
-			
 
 		}
 	}
-	
+
 	private boolean isIllegal(Piece king) {
 		if (king.type != Type.KING) {
 			return false;
@@ -255,107 +263,103 @@ public class GamePanel extends JPanel implements Runnable {
 
 		return false; // The king is safe
 	}
-	
+
 	private boolean opponentCanCapKing() {
-		
+
 		Piece king = getKing(false);
-		for(Piece piec : simPieces) {
-			if(piec.color != king.color && piec.canMove(king.col, king.row)){
+		for (Piece piec : simPieces) {
+			if (piec.color != king.color && piec.canMove(king.col, king.row)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
-	private boolean isKingInCheck () {
-		
+
+	private boolean isKingInCheck() {
+
 		Piece king = getKing(true);
-		
-		if(activeP.canMove(king.col, king.row)) {
+
+		if (activeP.canMove(king.col, king.row)) {
 			checkingP = activeP;
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	private Piece getKing(boolean opponent) {
 		Piece king = null;
-		
-		for(Piece piec: simPieces) {
-			if(opponent) {
-				if(piec.type == Type.KING && piec.color != currentColor) {
+
+		for (Piece piec : simPieces) {
+			if (opponent) {
+				if (piec.type == Type.KING && piec.color != currentColor) {
 					king = piec;
 				}
-			}
-			else {
-				if(piec.type == Type.KING && piec.color == currentColor) {
+			} else {
+				if (piec.type == Type.KING && piec.color == currentColor) {
 					king = piec;
 				}
 			}
 		}
 		return king;
 	}
-	
+
 	private boolean isCheckMate() {
 		Piece king = getKing(true);
-		if(kingCanMove(king)) {
+		if (kingCanMove(king)) {
 			return false;
-		}
-		else {
+		} else {
 			// still have a chance by blocking or using other pieces
 			int colDiff = Math.abs(checkingP.col - king.col);
 			int rowDiff = Math.abs(checkingP.row - king.row);
-			
-			if(colDiff == 0) {
-				//the checking piece is attacking vertically
-				if(checkingP.row < king.row) {
+
+			if (colDiff == 0) {
+				// the checking piece is attacking vertically
+				if (checkingP.row < king.row) {
 					for (int row = checkingP.row; row < king.row; row++) {
-						for(Piece piec : simPieces) {
-							if(piec != king && piec.color != currentColor && piec.canMove(checkingP.col, row)) {
+						for (Piece piec : simPieces) {
+							if (piec != king && piec.color != currentColor && piec.canMove(checkingP.col, row)) {
 								return false;
 							}
 						}
 					}
 				}
-				if(checkingP.row > king.row) {
+				if (checkingP.row > king.row) {
 					for (int row = checkingP.row; row > king.row; row--) {
-						for(Piece piec : simPieces) {
-							if(piec != king && piec.color != currentColor && piec.canMove(checkingP.col, row)) {
+						for (Piece piec : simPieces) {
+							if (piec != king && piec.color != currentColor && piec.canMove(checkingP.col, row)) {
 								return false;
 							}
 						}
 					}
 				}
-			}
-			else if(rowDiff == 0) {
+			} else if (rowDiff == 0) {
 				// checking piece is attacking horizontally
-				if(checkingP.col < king.col) {
+				if (checkingP.col < king.col) {
 					for (int col = checkingP.col; col < king.col; col++) {
-						for(Piece piec : simPieces) {
-							if(piec != king && piec.color != currentColor && piec.canMove(col, checkingP.row)) {
+						for (Piece piec : simPieces) {
+							if (piec != king && piec.color != currentColor && piec.canMove(col, checkingP.row)) {
 								return false;
 							}
 						}
 					}
 				}
-				if(checkingP.col > king.col) {
+				if (checkingP.col > king.col) {
 					for (int col = checkingP.col; col > king.col; col--) {
-						for(Piece piec : simPieces) {
-							if(piec != king && piec.color != currentColor && piec.canMove(col, checkingP.row)) {
+						for (Piece piec : simPieces) {
+							if (piec != king && piec.color != currentColor && piec.canMove(col, checkingP.row)) {
 								return false;
 							}
 						}
 					}
 				}
-				
-			} 
-			else if (colDiff == rowDiff) {
+
+			} else if (colDiff == rowDiff) {
 				// checking piece is attacking diagonally
 				if (checkingP.row < king.row) {
-					//above
+					// above
 					if (checkingP.col < king.col) {
-						//right
+						// right
 						for (int col = checkingP.col, row = checkingP.row; col < king.col; col++, row++) {
 							for (Piece piec : simPieces) {
 								if (piec != king && piec.color != currentColor && piec.canMove(col, row)) {
@@ -365,7 +369,7 @@ public class GamePanel extends JPanel implements Runnable {
 						}
 					}
 					if (checkingP.col > king.col) {
-						//left
+						// left
 						for (int col = checkingP.col, row = checkingP.row; col > king.col; col--, row++) {
 							for (Piece piec : simPieces) {
 								if (piec != king && piec.color != currentColor && piec.canMove(col, row)) {
@@ -403,44 +407,73 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 		return true;
 	}
-	
+
 	private boolean kingCanMove(Piece king) {
-		
-		//simulate if king can move anywhere
-		if(isValidMove(king, -1, -1)) { return true;}
-		if(isValidMove(king, 0, -1)) { return true;}
-		if(isValidMove(king, 1, -1)) { return true;}
-		if(isValidMove(king, -1, 0)) { return true;}
-		if(isValidMove(king, 1, 0)) { return true;}
-		if(isValidMove(king, -1, 1)) { return true;}
-		if(isValidMove(king, 0, 1)) { return true;}
-		if(isValidMove(king, 1, 1)) { return true;}
-		
-		
+
+		// simulate if king can move anywhere
+		if (isValidMove(king, -1, -1)) {
+			return true;
+		}
+		if (isValidMove(king, 0, -1)) {
+			return true;
+		}
+		if (isValidMove(king, 1, -1)) {
+			return true;
+		}
+		if (isValidMove(king, -1, 0)) {
+			return true;
+		}
+		if (isValidMove(king, 1, 0)) {
+			return true;
+		}
+		if (isValidMove(king, -1, 1)) {
+			return true;
+		}
+		if (isValidMove(king, 0, 1)) {
+			return true;
+		}
+		if (isValidMove(king, 1, 1)) {
+			return true;
+		}
+
 		return false;
 	}
-	
+
 	private boolean isValidMove(Piece king, int colPlus, int rowPlus) {
-		
+
 		boolean isValidMov = false;
 		king.col += colPlus;
 		king.row += rowPlus;
-		
-		if(king.canMove(king.col, king.row)) {
-			if(king.hittingP != null) {
+
+		if (king.canMove(king.col, king.row)) {
+			if (king.hittingP != null) {
 				simPieces.remove(king.hittingP.getIndex());
 			}
-			if(!isIllegal(king)) {
+			if (!isIllegal(king)) {
 				isValidMov = true;
 			}
 		}
-		
+
 		king.resetPosition();
 		copyPieces(pieces, simPieces);
-		
+
 		return isValidMov;
 	}
 
+	private boolean isStalemate() {
+		int count = 0;
+		for (Piece piec : simPieces) {
+			if (piec.color != currentColor) {
+				count++;
+			}
+		}
+		if (count == 1) {
+			if (!kingCanMove(getKing(true))) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	private void checkCastling() {
 		if (castlingP != null) {
@@ -494,7 +527,7 @@ public class GamePanel extends JPanel implements Runnable {
 				if (piec.col == mouse.x / Board.SQUARE_SIZE && piec.row == mouse.y / Board.SQUARE_SIZE) {
 					switch (piec.type) {
 					case ROOK:
-						simPieces.add(new Rook( activeP.col, activeP.row, currentColor));
+						simPieces.add(new Rook(activeP.col, activeP.row, currentColor));
 						break;
 					case KNIGHT:
 						simPieces.add(new Knight(activeP.col, activeP.row, currentColor));
@@ -530,18 +563,17 @@ public class GamePanel extends JPanel implements Runnable {
 			p.draw(g2);
 		}
 
-		if (activeP != null && canMove ) {
-		    Color fillColor = ( isIllegal(activeP) || opponentCanCapKing() ) ? ILLEGAL_COLOR : Color.WHITE;
+		if (activeP != null && canMove) {
+			Color fillColor = (isIllegal(activeP) || opponentCanCapKing()) ? ILLEGAL_COLOR : Color.WHITE;
 
-		    g2.setColor(fillColor);
-		    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-		    g2.fillRect(activeP.col * Board.SQUARE_SIZE, activeP.row * Board.SQUARE_SIZE,
-		                Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-		    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+			g2.setColor(fillColor);
+			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+			g2.fillRect(activeP.col * Board.SQUARE_SIZE, activeP.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE,
+					Board.SQUARE_SIZE);
+			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
-		    activeP.draw(g2);
+			activeP.draw(g2);
 		}
-
 
 		// status message
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -549,65 +581,63 @@ public class GamePanel extends JPanel implements Runnable {
 		g2.setColor(Color.white);
 
 		if (promotion) {
-			//NINAD_ARAKH
+			// NINAD_ARAKH
 			g2.drawString("Promote to :", 780, 150);
 			for (Piece piec : promoPieces) {
-				if(currentColor == WHITE) {
+				if (currentColor == WHITE) {
 					g2.setColor(Color.BLACK);
-				     g2.fillRect(piec.GetX(piec.col), piec.GetY(piec.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-				}else {
+					g2.fillRect(piec.GetX(piec.col), piec.GetY(piec.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+				} else {
 					g2.setColor(Color.WHITE);
-				     g2.fillRect(piec.GetX(piec.col), piec.GetY(piec.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+					g2.fillRect(piec.GetX(piec.col), piec.GetY(piec.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE);
 				}
-				 
-			        
+
 				g2.drawImage(piec.image, piec.GetX(piec.col), piec.GetY(piec.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE,
 						null);
 			}
 		} else {
 			if (currentColor == WHITE) {
 				g2.drawString("White's Turn", 780, 550);
-				if(checkingP != null && checkingP.color == BLACK) {
-					g2.setColor(Color.red);
-					g2.drawString("The KING", 780, 650);
-					g2.drawString("Is in Check!", 780, 700);
+				if (checkingP != null && checkingP.color == BLACK) {
+						g2.setColor(Color.red);
+						g2.drawString("The KING", 780, 650);
+						g2.drawString("Is in Check!", 780, 700);
 				}
 			} else {
 				g2.drawString("Black's Turn", 780, 250);
-				if(checkingP != null && checkingP.color == WHITE) {
-					g2.setColor(Color.red);
-					g2.drawString("The KING", 780, 100);
-					g2.drawString("Is in Check!", 780, 150);
+				if (checkingP != null && checkingP.color == WHITE) {
+						g2.setColor(Color.red);
+						g2.drawString("The KING", 780, 100);
+						g2.drawString("Is in Check!", 780, 150);
 				}
 			}
 
 		}
-		
-		if(gameOver) {
-			
+
+		if (gameOver) {
+
 			g2.setColor(new Color(13, 0, 11, 128));
 			g2.fillRect(0, 0, Width, Height);
 			String s = "";
-			if(currentColor == WHITE) {
+			if (currentColor == WHITE) {
 				s = "WHITE WINS";
-			}else {
+			} else {
 				s = "BLACK WINS";
 			}
 			g2.setFont(new Font("Book Antiqua", Font.BOLD, 90));
 			g2.setColor(WIN_COLOR);
 			g2.drawString(s, 200, 420);
 		}
+		if (stalemate) {
+			g2.setColor(new Color(13, 0, 11, 128));
+			g2.fillRect(0, 0, Width, Height);
+
+			g2.setFont(new Font("Book Antiqua", Font.BOLD, 90));
+			g2.setColor(Color.YELLOW);
+			g2.drawString("Stalemate", 200, 420);
+
+		}
 
 	}
 
 }
-
-
-
-
-
-
-
-
-
-
